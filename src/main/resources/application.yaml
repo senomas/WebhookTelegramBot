@@ -1,0 +1,42 @@
+spring:
+   jackson:
+      time-zone: GMT+7
+      serialization.write-dates-as-timestamps: false
+
+   jpa:
+      hibernate:
+         ddl-auto: update
+
+      properties:
+         hibernate:
+            dialect: org.hibernate.dialect.MySQLDialect
+
+   datasource:
+      url: jdbc:mysql://${DB_SERVER:webhookdb:3306}/telebot?autoReconnect=true&useSSL=false
+      username: telebot
+      password: ENC(ySOgt9J+K3hF1Ut4i+F2P5joi4kFP5mk6TAzeYZrl3U=)
+      testWhileIdle: true
+      validationQuery:  SELECT 1
+
+   data:
+      rest:
+         base-path: /api/v${rest.version}
+
+bot:
+   username: code_senomas_bot
+   token: ENC(DtSL9gsV/8vCTsNq3lzi2G7wnhFnt7//n6dyWGPqm2qcmwzyCdAoesBzPmvPFFJ8qwehS/5IoSfQ16c9iun3XQ==)
+
+rest:
+   version: 1.0
+   uri: /api/v${rest.version}
+   auth.uri: /auth/v${rest.version}
+
+com.senomas:
+   http-logger:
+      order: 0
+      path:
+         "/": BASIC
+         "/v2/api-docs": OFF
+         "/swagger-": OFF
+         "/configuration/": OFF
+         "/api/": ALL

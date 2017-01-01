@@ -1,0 +1,65 @@
+{
+   "secret": "secure",
+   "ref": "refs/heads/master",
+   "before": "9d658c4c5afc0a78e70545c7da634d7f54de25d4",
+   "after": "2acf7acbfd0d1641fc8fae61122a14d6d41665c0",
+   "compare_url": "https://code.senomas.com/seno/gogsbot/compare/9d658c4c5afc0a78e70545c7da634d7f54de25d4...2acf7acbfd0d1641fc8fae61122a14d6d41665c0",
+   "commits": [
+      {
+         "id": "2acf7acbfd0d1641fc8fae61122a14d6d41665c0",
+         "message": "devn",
+         "url": "https://code.senomas.com/seno/gogsbot/commit/2acf7acbfd0d1641fc8fae61122a14d6d41665c0",
+         "author": {
+            "name": "Denmaseno",
+            "email": "agus@senomas.com",
+            "username": "seno"
+         },
+         "committer": {
+            "name": "Denmaseno",
+            "email": "agus@senomas.com",
+            "username": "seno"
+         },
+         "timestamp": "2016-12-31T02:15:33Z"
+      }
+   ],
+   "repository": {
+      "id": 73,
+      "owner": {
+         "id": 1,
+         "username": "seno",
+         "full_name": "",
+         "email": "agus@senomas.com",
+         "avatar_url": "https://secure.gravatar.com/avatar/084383990eb3c67f5e24ea5021f7d6c5"
+      },
+      "name": "gogsbot",
+      "full_name": "seno/gogsbot",
+      "description": "",
+      "private": true,
+      "fork": false,
+      "html_url": "https://code.senomas.com/seno/gogsbot",
+      "ssh_url": "git@code.senomas.com:seno/gogsbot.git",
+      "clone_url": "https://code.senomas.com/seno/gogsbot.git",
+      "website": "",
+      "stars_count": 0,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "master",
+      "created_at": "2016-12-26T05:49:26Z",
+      "updated_at": "2016-12-31T01:58:34Z"
+   },
+   "pusher": {
+      "id": 1,
+      "username": "seno",
+      "full_name": "",
+      "email": "agus@senomas.com",
+      "avatar_url": "https://secure.gravatar.com/avatar/084383990eb3c67f5e24ea5021f7d6c5"
+   },
+   "sender": {
+      "id": 1,
+      "username": "seno",
+      "full_name": "",
+      "email": "agus@senomas.com",
+      "avatar_url": "https://secure.gravatar.com/avatar/084383990eb3c67f5e24ea5021f7d6c5"
+   }
+}

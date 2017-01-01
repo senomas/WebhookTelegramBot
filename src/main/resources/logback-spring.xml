@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.out</Target>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} {%X} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>logs/webhookbot.log</File>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} {%X} - %msg%n
+            </pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/webhookbot.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+    <logger name="com.senomas.common.loggerfilter.LoggerFilter" level="INFO" additivity="false">
+        <appender-ref ref="file" />
+        <appender-ref ref="stdout" />
+    </logger>
+    <springProfile name="dev">
+        <logger name="org.springframework.web" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="org.springframework.security" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="org.springframework.orm.jpa" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="org.hibernate" level="INFO" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="com.senomas" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="com.senomas.boot.security" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+        <logger name="id.co.hanoman" level="DEBUG" additivity="false">
+            <appender-ref ref="file" />
+            <appender-ref ref="stdout" />
+        </logger>
+    </springProfile>
+    <root level="INFO">
+        <appender-ref ref="file" />
+        <appender-ref ref="stdout" />
+    </root>
+</configuration>
