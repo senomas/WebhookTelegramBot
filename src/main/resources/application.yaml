@@ -12,7 +12,7 @@ spring:
             dialect: org.hibernate.dialect.MySQLDialect
 
    datasource:
-      url: jdbc:mysql://${DB_SERVER:webhookdb:3306}/telebot?autoReconnect=true&useSSL=false
+      url: jdbc:mysql://${DB_SERVER:telebotdb:3306}/telebot?autoReconnect=true&useSSL=false
       username: telebot
       password: ENC(ySOgt9J+K3hF1Ut4i+F2P5joi4kFP5mk6TAzeYZrl3U=)
       testWhileIdle: true

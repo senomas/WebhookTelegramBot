@@ -2,11 +2,11 @@
 
 ## MYSQL DOCKER
 ```
-docker run -d --name webhookdb --net=docknet \
+docker run -d --name telebotdb --net=docknet \
    -p 3316:3306 \
    -e MYSQL_ROOT_PASSWORD=dodol123 \
-   -e MYSQL_DATABASE=gogs \
-   -e MYSQL_USER=gogs \
+   -e MYSQL_DATABASE=telebot \
+   -e MYSQL_USER=telebot \
    -e MYSQL_PASSWORD=dodol123 \
    mysql
 ```
@@ -21,16 +21,15 @@ docker run -d --name nexus --net=docknet \
 
 ## DOCKER
 ```
-docker rm -f webhook
+docker rm -f telebotdb
 
-docker run -d --name webhook --net=docknet \
-   -e GIT=https://deploy:dodolduren123@code.senomas.com/seno/gogsbot.git \
-   -e PRJ=gogsbot/WebhookTelegramBot \
-   --link webhookdb:webhookdb \
-   -p 8082:8080 \
+docker run -d --name telebotdb --net=docknet \
+   -e GIT=https://github.com/senomas/WebhookTelegramBot.git \
+   -e PRJ=WebhookTelegramBot \
+   -p 10.37.1.2:8082:8080 \
    senomas/maven-springboot
 
-docker logs -f webhook
+docker logs -f telebotdb
 ```
 
 ## TEST POST
