@@ -18,7 +18,7 @@ docker volume create --name maven-data
 docker rm -f telebot
 
 docker run -d --name telebot --net=docknet \
-   -v maven-data:/root/.m2/repository/
+   -v maven-data:/root/.m2/repository/ \
    -e GIT=https://github.com/senomas/WebhookTelegramBot.git \
    -e PRJ=WebhookTelegramBot \
    -p 10.37.1.2:8082:8080 \

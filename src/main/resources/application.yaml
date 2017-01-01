@@ -23,8 +23,8 @@ spring:
          base-path: /api/v${rest.version}
 
 bot:
-   username: code_senomas_bot
-   token: ENC(DtSL9gsV/8vCTsNq3lzi2G7wnhFnt7//n6dyWGPqm2qcmwzyCdAoesBzPmvPFFJ8qwehS/5IoSfQ16c9iun3XQ==)
+   username: SenomasBot
+   token: ENC(Cp/va70Nismiu8m7QujQA77Wg3OIFfPDiqn8lP0WcBxaCjQSQ1T7nIgVgMvKJC69KZGjEzVSt3PrG32BMIGc1w==)
 
 rest:
    version: 1.0
