@@ -1,14 +1,11 @@
 package com.senomas.webhookbot.service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 
@@ -46,8 +43,10 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 	String token;
 
 	String userName;
-
-	Map<String, Pattern> cmds = new LinkedHashMap<>();
+	
+	String state = null;
+	
+	Map<String, Object> map = new HashMap<>();
 
 	@PostConstruct
 	public void init() throws TelegramApiRequestException {
@@ -59,11 +58,6 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 		TelegramBotsApi botsApi = new TelegramBotsApi();
 
 		botsApi.registerBot(this);
-
-		cmds.put("subscribe", Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
-		cmds.put("unsub", Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
-		cmds.put("list", Pattern.compile("/list\\s*"));
-		cmds.put("topic", Pattern.compile("/topic\\s*"));
 	}
 
 	@Override
@@ -103,22 +97,49 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 			// log.info("MESSAGE RECEIVE hasPhoto: " + message.hasPhoto());
 			// log.info("MESSAGE RECEIVE hasText: " + message.hasText());
 			if (update.getMessage().hasText()) {
-				String mtxt = message.getText();
+				String mtxt = message.getText().trim();
 				log.info("MESSAGE RECEIVE text: [" + mtxt + "]");
-				String cmd = null;
-				Matcher m = null;
-				for (Entry<String, Pattern> c : cmds.entrySet()) {
-					m = c.getValue().matcher(mtxt);
-					if (m.matches()) {
-						cmd = c.getKey();
-						break;
-					}
-				}
+//				cmds.put("subscribe", Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
+//				cmds.put("unsub", Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
+//				cmds.put("list", Pattern.compile("/list\\s*"));
+//				cmds.put("topic", Pattern.compile("/topic\\s*"));
+				
 				SendMessage sm = null;
-				if ("subscribe".equals(cmd)) {
-					String topicUrl = m.group(1);
-					String secret = m.group(2);
-
+				if ("/topic".equals(mtxt)) {
+					StringBuilder sb = new StringBuilder();
+					for (Topic topic : topicRepo.findAll()) {
+						if (sb.length() > 0)
+							sb.append('\n');
+						sb.append(topic.getUrl());
+					}
+					sb.insert(0, "Topics:\n");
+					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
+				} else if ("/list".equals(mtxt)) {
+					StringBuilder sb = new StringBuilder();
+					for (Subscriber sub : subscriberRepo.findByChatId(chatId)) {
+						if (sb.length() > 0)
+							sb.append('\n');
+						sb.append(sub.getTopic().getUrl());
+					}
+					sb.insert(0, "Subscribed topics:\n");
+					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
+				} else if ("/subscribe".equals(mtxt)) {
+					map.clear();
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+					state = "/subscribe/1";
+				} else if ("/unsub".equals(mtxt)) {
+					map.clear();
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+					state = "/unsub/1";
+				} else if ("/subscribe/1".equals(state)) {
+					map.put("topicUrl", mtxt);
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
+					state = "/subscribe/2";
+				} else if ("/subscribe/2".equals(state)) {
+					state = null;
+					String topicUrl = (String) map.get("topicUrl");
+					String secret = mtxt;
+					map.clear();
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic != null) {
 						if (secret.equals(topic.getSecret())) {
@@ -143,8 +164,8 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					} else {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
 					}
-				} else if ("unsub".equals(cmd)) {
-					String topicUrl = m.group(1);
+				} else if ("/unsub/1".equals(state)) {
+					String topicUrl = mtxt;
 
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic != null) {
@@ -154,27 +175,9 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					} else {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
 					}
-				} else if ("list".equals(cmd)) {
-					StringBuilder sb = new StringBuilder();
-					for (Subscriber sub : subscriberRepo.findByChatId(chatId)) {
-						if (sb.length() > 0)
-							sb.append('\n');
-						sb.append(sub.getTopic().getUrl());
-					}
-					sb.insert(0, "Subscribed topics:\n");
-					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
-				} else if ("topic".equals(cmd)) {
-					StringBuilder sb = new StringBuilder();
-					for (Topic topic : topicRepo.findAll()) {
-						if (sb.length() > 0)
-							sb.append('\n');
-						sb.append(topic.getUrl());
-					}
-					sb.insert(0, "Topics:\n");
-					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
 				}
 				if (sm == null) {
-					sm = new SendMessage().setChatId(message.getChatId()).setText("UNKNOWN: " + mtxt);
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Unknown: " + mtxt);
 				}
 
 				try {

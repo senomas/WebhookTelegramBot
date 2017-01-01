@@ -36,5 +36,13 @@ curl -v -X POST -H "Content-Type: application/json" -d @payload2.json 10.37.1.2:
 curl -v -X POST -H "Content-Type: application/json" -d @payload2.json 10.37.1.2:8082/api/v1.0/webhook/transmission/mov/
 ```
 
+## BOT COMMANDS
+```
+topic - list all available topics
+list - list subscribed topic
+subscribe - subscribe to topic
+unsub - unsubscribe topic
+```
+
 ## HOOK
 http://webhook:8080/api/v1.0/webhook/gogs/foo/
