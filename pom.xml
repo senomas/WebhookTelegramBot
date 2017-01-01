@@ -170,34 +170,6 @@
 
 	<repositories>
 		<repository>
-			<id>local-senomas</id>
-			<url>http://nexus:8081/nexus/content/repositories/senomas</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>local-spring.io</id>
-			<url>http://nexus:8081/nexus/content/repositories/spring.io</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>local-central</id>
-			<url>http://nexus:8081/nexus/content/repositories/central</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>local-apache</id>
-			<url>http://nexus:8081/nexus/content/repositories/apache</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
 			<id>senomas</id>
 			<url>http://maven.senomas.com/nexus/content/repositories/releases/</url>
 			<releases>

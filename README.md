@@ -11,25 +11,20 @@ docker run -d --name telebotdb --net=docknet \
    mysql
 ```
 
-## DOCKER NEXUS
-```
-docker run -d --name nexus --net=docknet \
-  --restart=always \
-  -p 8081:8081 \
-  sonatype/nexus
-```
-
 ## DOCKER
 ```
-docker rm -f telebotdb
+docker volume create --name maven-data
 
-docker run -d --name telebotdb --net=docknet \
+docker rm -f telebot
+
+docker run -d --name telebot --net=docknet \
+   -v maven-data:/root/.m2/repository/
    -e GIT=https://github.com/senomas/WebhookTelegramBot.git \
    -e PRJ=WebhookTelegramBot \
    -p 10.37.1.2:8082:8080 \
    senomas/maven-springboot
 
-docker logs -f telebotdb
+docker logs -f telebot
 ```
 
 ## TEST POST
