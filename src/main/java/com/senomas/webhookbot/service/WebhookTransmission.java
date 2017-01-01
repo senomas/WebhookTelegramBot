@@ -38,7 +38,7 @@ public class WebhookTransmission implements WebhookService {
 			msg.setTimestamp(new Date());
 			msg = repo.save(msg);
 
-			String topicUrl = "http://webhook/transmission/"+hook;
+			String topicUrl = "https://senomas.com/transmission/"+hook;
 			Topic topic = topicRepo.findByUrl(topicUrl);
 			if (topic == null) {
 				topic = new Topic();
@@ -49,7 +49,7 @@ public class WebhookTransmission implements WebhookService {
 				topicRepo.save(topic);
 			}
 
-			bot.broadcast(topic, "Torrent "+payload.get("TR_TORRENT_NAME").asText()+" finished");
+			bot.broadcast(topic, "Torrent finished "+hook+" "+payload.get("TR_TORRENT_NAME").asText());
 
 			return msg.getId();
 		} catch (JsonProcessingException e) {

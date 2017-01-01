@@ -29,9 +29,11 @@ docker logs -f telebot
 
 ## TEST POST
 ```
-curl -v -X POST -H "Content-Type: application/json" -d @payload.json 10.37.1.2:8082/api/v1.0/webhook/gogs/demo/
+curl -v -X POST -H "Content-Type: application/json" -d @payload.json 10.37.1.2:8082/api/v1.0/webhook/gogs/foo/
 
-curl -v -X POST -H "Content-Type: application/json" -d @payload2.json 10.37.1.2:8082/api/v1.0/webhook/transmission/torrent/
+curl -v -X POST -H "Content-Type: application/json" -d @payload2.json 10.37.1.2:8082/api/v1.0/webhook/transmission/tv/
+
+curl -v -X POST -H "Content-Type: application/json" -d @payload2.json 10.37.1.2:8082/api/v1.0/webhook/transmission/mov/
 ```
 
 ## TEST TRANSMISSION
