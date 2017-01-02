@@ -42,6 +42,8 @@ topic - list all available topics
 list - list subscribed topic
 subscribe - subscribe to topic
 unsub - unsubscribe topic
+newtopic - create new topic
+deltopic - delete topic
 ```
 
 ## HOOK
