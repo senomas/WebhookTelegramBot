@@ -44,9 +44,9 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 	String token;
 
 	String userName;
-	
+
 	String state = null;
-	
+
 	Map<String, Object> map = new HashMap<>();
 
 	@PostConstruct
@@ -100,11 +100,13 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 			if (update.getMessage().hasText()) {
 				String mtxt = message.getText().trim();
 				log.info("MESSAGE RECEIVE text: [" + mtxt + "]");
-//				cmds.put("subscribe", Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
-//				cmds.put("unsub", Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
-//				cmds.put("list", Pattern.compile("/list\\s*"));
-//				cmds.put("topic", Pattern.compile("/topic\\s*"));
-				
+				// cmds.put("subscribe",
+				// Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
+				// cmds.put("unsub",
+				// Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
+				// cmds.put("list", Pattern.compile("/list\\s*"));
+				// cmds.put("topic", Pattern.compile("/topic\\s*"));
+
 				SendMessage sm = null;
 				if ("/topic".equals(mtxt)) {
 					StringBuilder sb = new StringBuilder();
@@ -141,21 +143,35 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					}
 					topicRepo.save(topic);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Topic created");
+					state = null;
+					map.clear();
 				} else if ("/deltopic".equals(mtxt)) {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/deltopic/1";
 				} else if ("/deltopic/1".equals(state)) {
-					String topicUrl = mtxt;
+					map.put("topicUrl", mtxt);
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
+					state = "/deltopic/2";
+				} else if ("/deltopic/2".equals(state)) {
+					String topicUrl = (String) map.get("topicUrl");
+					String secret = mtxt;
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic != null) {
-						List<Subscriber> subs = subscriberRepo.findByTopic(topic);
-						subscriberRepo.delete(subs);
-						topicRepo.delete(topic);
-						sm = new SendMessage().setChatId(message.getChatId()).setText("Topic deleted");
+						if (secret.equals(topic.getSecret())) {
+							List<Subscriber> subs = subscriberRepo.findByTopic(topic);
+							subscriberRepo.delete(subs);
+							topicRepo.delete(topic);
+							sm = new SendMessage().setChatId(message.getChatId()).setText("Topic deleted");
+						} else {
+							sm = new SendMessage().setChatId(message.getChatId())
+									.setText("Invalid secret '" + secret + "'");
+						}
 					} else {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Topic not found");
 					}
+					state = null;
+					map.clear();
 				} else if ("/subscribe".equals(mtxt)) {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
