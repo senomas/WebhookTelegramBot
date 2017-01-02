@@ -47,8 +47,8 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 
 	String state = null;
 	String stateUser = null;
-
-	Map<String, Object> map = new HashMap<>();
+	long stateObsolete = 0;
+	Map<String, Object> stateCtx = new HashMap<>();
 
 	@PostConstruct
 	public void init() throws TelegramApiRequestException {
@@ -115,6 +115,11 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 				// Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
 				// cmds.put("list", Pattern.compile("/list\\s*"));
 				// cmds.put("topic", Pattern.compile("/topic\\s*"));
+				
+				if (state != null && stateObsolete < System.currentTimeMillis()) {
+					stateCtx.clear();
+					state = null;
+				}
 
 				SendMessage sm = null;
 				if ("/topic".equals(mtxt)) {
@@ -136,10 +141,11 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					sb.insert(0, "Subscribed topics:\n");
 					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
 				} else if ("/newtopic".equals(mtxt)) {
-					map.clear();
+					stateCtx.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/newtopic/1";
 					stateUser = muser;
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/newtopic/1".equals(state) && muser.equals(stateUser)) {
 					String topicUrl = mtxt;
 					Topic topic = topicRepo.findByUrl(topicUrl);
@@ -154,18 +160,20 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					topicRepo.save(topic);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Topic created");
 					state = null;
-					map.clear();
+					stateCtx.clear();
 				} else if ("/deltopic".equals(mtxt)) {
-					map.clear();
+					stateCtx.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/deltopic/1";
 					stateUser = muser;
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/deltopic/1".equals(state) && muser.equals(stateUser)) {
-					map.put("topicUrl", mtxt);
+					stateCtx.put("topicUrl", mtxt);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
 					state = "/deltopic/2";
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/deltopic/2".equals(state) && muser.equals(stateUser)) {
-					String topicUrl = (String) map.get("topicUrl");
+					String topicUrl = (String) stateCtx.get("topicUrl");
 					String secret = mtxt;
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic != null) {
@@ -182,21 +190,21 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Topic not found");
 					}
 					state = null;
-					map.clear();
+					stateCtx.clear();
 				} else if ("/subscribe".equals(mtxt)) {
-					map.clear();
+					stateCtx.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/subscribe/1";
 					stateUser = muser;
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/subscribe/1".equals(state) && muser.equals(stateUser)) {
-					map.put("topicUrl", mtxt);
+					stateCtx.put("topicUrl", mtxt);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
 					state = "/subscribe/2";
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/subscribe/2".equals(state) && muser.equals(stateUser)) {
-					state = null;
-					String topicUrl = (String) map.get("topicUrl");
+					String topicUrl = (String) stateCtx.get("topicUrl");
 					String secret = mtxt;
-					map.clear();
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic != null) {
 						if (secret.equals(topic.getSecret())) {
@@ -221,11 +229,14 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					} else {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
 					}
+					state = null;
+					stateCtx.clear();
 				} else if ("/unsub".equals(mtxt)) {
-					map.clear();
+					stateCtx.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/unsub/1";
 					stateUser = muser;
+					stateObsolete = System.currentTimeMillis() + 120000;
 				} else if ("/unsub/1".equals(state) && muser.equals(stateUser)) {
 					String topicUrl = mtxt;
 
@@ -237,6 +248,8 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					} else {
 						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
 					}
+					state = null;
+					stateCtx.clear();
 				}
 				if (sm == null) {
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Unknown: " + mtxt);
