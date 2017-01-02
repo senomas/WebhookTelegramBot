@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
+import com.senomas.webhookbot.Application;
 import com.senomas.webhookbot.model.Subscriber;
 import com.senomas.webhookbot.model.SubscriberRepository;
 import com.senomas.webhookbot.model.Topic;
@@ -99,160 +101,171 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 			// log.info("MESSAGE RECEIVE hasPhoto: " + message.hasPhoto());
 			// log.info("MESSAGE RECEIVE hasText: " + message.hasText());
 			if (update.getMessage().hasText()) {
-				String mtxt = message.getText().trim();
-				String muser = message.getFrom().getUserName();
-				if (message.getChat().isGroupChat()) {
-					if (mtxt.endsWith("@SenomasBot")) {
-						mtxt = mtxt.substring(0, mtxt.length()-11).trim();
-					} else {
-						return;
-					}
-				}
-				log.info("MESSAGE RECEIVE text: [" + mtxt + "] from ["+muser+"]");
-				// cmds.put("subscribe",
-				// Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
-				// cmds.put("unsub",
-				// Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
-				// cmds.put("list", Pattern.compile("/list\\s*"));
-				// cmds.put("topic", Pattern.compile("/topic\\s*"));
-				
-				if (state != null && stateObsolete < System.currentTimeMillis()) {
-					stateCtx.clear();
-					state = null;
-				}
-
 				SendMessage sm = null;
-				if ("/topic".equals(mtxt)) {
-					StringBuilder sb = new StringBuilder();
-					for (Topic topic : topicRepo.findAll()) {
-						if (sb.length() > 0)
-							sb.append('\n');
-						sb.append(topic.getUrl());
-					}
-					sb.insert(0, "Topics:\n");
-					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
-				} else if ("/list".equals(mtxt)) {
-					StringBuilder sb = new StringBuilder();
-					for (Subscriber sub : subscriberRepo.findByChatId(chatId)) {
-						if (sb.length() > 0)
-							sb.append('\n');
-						sb.append(sub.getTopic().getUrl());
-					}
-					sb.insert(0, "Subscribed topics:\n");
-					sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
-				} else if ("/newtopic".equals(mtxt)) {
-					stateCtx.clear();
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
-					state = "/newtopic/1";
-					stateUser = muser;
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/newtopic/1".equals(state) && muser.equals(stateUser)) {
-					String topicUrl = mtxt;
-					Topic topic = topicRepo.findByUrl(topicUrl);
-					if (topic == null) {
-						topic = new Topic();
-						topic.setUrl(topicUrl);
-						topic.setSecret(UUID.randomUUID().toString());
-						topic.setTimestamp(new Date());
-					} else {
-						topic.setSecret(UUID.randomUUID().toString());
-					}
-					topicRepo.save(topic);
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Topic created");
-					state = null;
-					stateCtx.clear();
-				} else if ("/deltopic".equals(mtxt)) {
-					stateCtx.clear();
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
-					state = "/deltopic/1";
-					stateUser = muser;
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/deltopic/1".equals(state) && muser.equals(stateUser)) {
-					stateCtx.put("topicUrl", mtxt);
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
-					state = "/deltopic/2";
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/deltopic/2".equals(state) && muser.equals(stateUser)) {
-					String topicUrl = (String) stateCtx.get("topicUrl");
-					String secret = mtxt;
-					Topic topic = topicRepo.findByUrl(topicUrl);
-					if (topic != null) {
-						if (secret.equals(topic.getSecret())) {
-							List<Subscriber> subs = subscriberRepo.findByTopic(topic);
-							subscriberRepo.delete(subs);
-							topicRepo.delete(topic);
-							sm = new SendMessage().setChatId(message.getChatId()).setText("Topic deleted");
+				try {
+					String mtxt = message.getText().trim();
+					String muser = message.getFrom().getUserName();
+					if (message.getChat().isGroupChat()) {
+						if (mtxt.endsWith("@SenomasBot")) {
+							mtxt = mtxt.substring(0, mtxt.length() - 11).trim();
 						} else {
-							sm = new SendMessage().setChatId(message.getChatId())
-									.setText("Invalid secret '" + secret + "'");
+							return;
 						}
-					} else {
-						sm = new SendMessage().setChatId(message.getChatId()).setText("Topic not found");
 					}
-					state = null;
-					stateCtx.clear();
-				} else if ("/subscribe".equals(mtxt)) {
-					stateCtx.clear();
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
-					state = "/subscribe/1";
-					stateUser = muser;
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/subscribe/1".equals(state) && muser.equals(stateUser)) {
-					stateCtx.put("topicUrl", mtxt);
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
-					state = "/subscribe/2";
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/subscribe/2".equals(state) && muser.equals(stateUser)) {
-					String topicUrl = (String) stateCtx.get("topicUrl");
-					String secret = mtxt;
-					Topic topic = topicRepo.findByUrl(topicUrl);
-					if (topic != null) {
-						if (secret.equals(topic.getSecret())) {
-							Subscriber sub = subscriberRepo.findByTopicAndChatId(topic, chatId);
-							if (sub == null) {
-								sub = new Subscriber();
-								sub.setTopic(topic);
-								sub.setChatId(chatId);
-								sub.setTimestamp(new Date());
+					log.info("MESSAGE RECEIVE text: [" + mtxt + "] from [" + muser + "]");
+					// cmds.put("subscribe",
+					// Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
+					// cmds.put("unsub",
+					// Pattern.compile("/unsub\\s+([^\\s]+)\\s*"));
+					// cmds.put("list", Pattern.compile("/list\\s*"));
+					// cmds.put("topic", Pattern.compile("/topic\\s*"));
 
-								subscriberRepo.save(sub);
-							}
+					if (state != null && stateObsolete < System.currentTimeMillis()) {
+						stateCtx.clear();
+						state = null;
+					}
 
+					if ("/topic".equals(mtxt)) {
+						StringBuilder sb = new StringBuilder();
+						for (Topic topic : topicRepo.findAll()) {
+							if (sb.length() > 0)
+								sb.append('\n');
+							sb.append(topic.getUrl());
+						}
+						sb.insert(0, "Topics:\n");
+						sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
+					} else if ("/list".equals(mtxt)) {
+						StringBuilder sb = new StringBuilder();
+						for (Subscriber sub : subscriberRepo.findByChatId(chatId)) {
+							if (sb.length() > 0)
+								sb.append('\n');
+							sb.append(sub.getTopic().getUrl());
+						}
+						sb.insert(0, "Subscribed topics:\n");
+						sm = new SendMessage().setChatId(message.getChatId()).setText(sb.toString());
+					} else if ("/newtopic".equals(mtxt)) {
+						stateCtx.clear();
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+						state = "/newtopic/1";
+						stateUser = muser;
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/newtopic/1".equals(state) && muser.equals(stateUser)) {
+						String topicUrl = mtxt;
+						Topic topic = topicRepo.findByUrl(topicUrl);
+						if (topic == null) {
+							topic = new Topic();
+							topic.setUrl(topicUrl);
 							topic.setSecret(UUID.randomUUID().toString());
-							topicRepo.save(topic);
+							topic.setTimestamp(new Date());
+						} else {
+							topic.setSecret(UUID.randomUUID().toString());
+						}
+						topicRepo.save(topic);
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Topic created");
+						state = null;
+						stateCtx.clear();
+					} else if ("/deltopic".equals(mtxt)) {
+						stateCtx.clear();
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+						state = "/deltopic/1";
+						stateUser = muser;
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/deltopic/1".equals(state) && muser.equals(stateUser)) {
+						stateCtx.put("topicUrl", mtxt);
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
+						state = "/deltopic/2";
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/deltopic/2".equals(state) && muser.equals(stateUser)) {
+						String topicUrl = (String) stateCtx.get("topicUrl");
+						String secret = mtxt;
+						Topic topic = topicRepo.findByUrl(topicUrl);
+						if (topic != null) {
+							if (secret.equals(topic.getSecret())) {
+								List<Subscriber> subs = subscriberRepo.findByTopic(topic);
+								subscriberRepo.delete(subs);
+								topicRepo.delete(topic);
+								sm = new SendMessage().setChatId(message.getChatId()).setText("Topic deleted");
+							} else {
+								sm = new SendMessage().setChatId(message.getChatId())
+										.setText("Invalid secret '" + secret + "'");
+							}
+						} else {
+							sm = new SendMessage().setChatId(message.getChatId()).setText("Topic not found");
+						}
+						state = null;
+						stateCtx.clear();
+					} else if ("/subscribe".equals(mtxt)) {
+						stateCtx.clear();
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+						state = "/subscribe/1";
+						stateUser = muser;
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/subscribe/1".equals(state) && muser.equals(stateUser)) {
+						stateCtx.put("topicUrl", mtxt);
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
+						state = "/subscribe/2";
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/subscribe/2".equals(state) && muser.equals(stateUser)) {
+						String topicUrl = (String) stateCtx.get("topicUrl");
+						String secret = mtxt;
+						Topic topic = topicRepo.findByUrl(topicUrl);
+						if (topic != null) {
+							if (secret.equals(topic.getSecret())) {
+								Subscriber sub = subscriberRepo.findByTopicAndChatId(topic, chatId);
+								if (sub == null) {
+									sub = new Subscriber();
+									sub.setTopic(topic);
+									sub.setChatId(chatId);
+									sub.setTimestamp(new Date());
 
-							sm = new SendMessage().setChatId(message.getChatId()).setText("Subscribed to " + topicUrl);
+									subscriberRepo.save(sub);
+								}
+
+								topic.setSecret(UUID.randomUUID().toString());
+								topicRepo.save(topic);
+
+								sm = new SendMessage().setChatId(message.getChatId())
+										.setText("Subscribed to " + topicUrl);
+							} else {
+								sm = new SendMessage().setChatId(message.getChatId())
+										.setText("Invalid secret '" + secret + "'");
+							}
 						} else {
 							sm = new SendMessage().setChatId(message.getChatId())
-									.setText("Invalid secret '" + secret + "'");
+									.setText("Invalid url '" + topicUrl + "'");
 						}
-					} else {
-						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
-					}
-					state = null;
-					stateCtx.clear();
-				} else if ("/unsub".equals(mtxt)) {
-					stateCtx.clear();
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
-					state = "/unsub/1";
-					stateUser = muser;
-					stateObsolete = System.currentTimeMillis() + 120000;
-				} else if ("/unsub/1".equals(state) && muser.equals(stateUser)) {
-					String topicUrl = mtxt;
+						state = null;
+						stateCtx.clear();
+					} else if ("/unsub".equals(mtxt)) {
+						stateCtx.clear();
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
+						state = "/unsub/1";
+						stateUser = muser;
+						stateObsolete = System.currentTimeMillis() + 120000;
+					} else if ("/unsub/1".equals(state) && muser.equals(stateUser)) {
+						String topicUrl = mtxt;
 
-					Topic topic = topicRepo.findByUrl(topicUrl);
-					if (topic != null) {
-						subscriberRepo.deleteByTopicAndChatId(topic.getId(), chatId);
+						Topic topic = topicRepo.findByUrl(topicUrl);
+						if (topic != null) {
+							subscriberRepo.deleteByTopicAndChatId(topic.getId(), chatId);
 
-						sm = new SendMessage().setChatId(message.getChatId()).setText("Unsubscribe from " + topicUrl);
-					} else {
-						sm = new SendMessage().setChatId(message.getChatId()).setText("Invalid url '" + topicUrl + "'");
+							sm = new SendMessage().setChatId(message.getChatId())
+									.setText("Unsubscribe from " + topicUrl);
+						} else {
+							sm = new SendMessage().setChatId(message.getChatId())
+									.setText("Invalid url '" + topicUrl + "'");
+						}
+						state = null;
+						stateCtx.clear();
+					} else if ("/about".equals(mtxt)) {
+						sm = new SendMessage().setChatId(message.getChatId()).setText(IOUtils
+								.toString(Application.class.getResourceAsStream("/META-INF/changelog.txt"), "UTF-8"));
 					}
-					state = null;
-					stateCtx.clear();
-				}
-				if (sm == null) {
-					sm = new SendMessage().setChatId(message.getChatId()).setText("Unknown: " + mtxt);
+					if (sm == null) {
+						sm = new SendMessage().setChatId(message.getChatId()).setText("Unknown: " + mtxt);
+					}
+				} catch (Exception e) {
+					sm = new SendMessage().setChatId(message.getChatId()).setText("Error: " + e.getMessage());
 				}
 
 				try {
