@@ -46,6 +46,7 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 	String userName;
 
 	String state = null;
+	String stateUser = null;
 
 	Map<String, Object> map = new HashMap<>();
 
@@ -99,7 +100,9 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 			// log.info("MESSAGE RECEIVE hasText: " + message.hasText());
 			if (update.getMessage().hasText()) {
 				String mtxt = message.getText().trim();
-				log.info("MESSAGE RECEIVE text: [" + mtxt + "]");
+				String muser = message.getFrom().getUserName();
+				if (mtxt.endsWith("@SenomasBot")) mtxt = mtxt.substring(0, mtxt.length()-11).trim();
+				log.info("MESSAGE RECEIVE text: [" + mtxt + "] from ["+muser+"]");
 				// cmds.put("subscribe",
 				// Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
 				// cmds.put("unsub",
@@ -130,7 +133,8 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/newtopic/1";
-				} else if ("/newtopic/1".equals(state)) {
+					stateUser = muser;
+				} else if ("/newtopic/1".equals(state) && muser.equals(stateUser)) {
 					String topicUrl = mtxt;
 					Topic topic = topicRepo.findByUrl(topicUrl);
 					if (topic == null) {
@@ -149,11 +153,12 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/deltopic/1";
-				} else if ("/deltopic/1".equals(state)) {
+					stateUser = muser;
+				} else if ("/deltopic/1".equals(state) && muser.equals(stateUser)) {
 					map.put("topicUrl", mtxt);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
 					state = "/deltopic/2";
-				} else if ("/deltopic/2".equals(state)) {
+				} else if ("/deltopic/2".equals(state) && muser.equals(stateUser)) {
 					String topicUrl = (String) map.get("topicUrl");
 					String secret = mtxt;
 					Topic topic = topicRepo.findByUrl(topicUrl);
@@ -176,11 +181,12 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/subscribe/1";
-				} else if ("/subscribe/1".equals(state)) {
+					stateUser = muser;
+				} else if ("/subscribe/1".equals(state) && muser.equals(stateUser)) {
 					map.put("topicUrl", mtxt);
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter secret text:");
 					state = "/subscribe/2";
-				} else if ("/subscribe/2".equals(state)) {
+				} else if ("/subscribe/2".equals(state) && muser.equals(stateUser)) {
 					state = null;
 					String topicUrl = (String) map.get("topicUrl");
 					String secret = mtxt;
@@ -213,7 +219,8 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 					map.clear();
 					sm = new SendMessage().setChatId(message.getChatId()).setText("Please enter the topic url:");
 					state = "/unsub/1";
-				} else if ("/unsub/1".equals(state)) {
+					stateUser = muser;
+				} else if ("/unsub/1".equals(state) && muser.equals(stateUser)) {
 					String topicUrl = mtxt;
 
 					Topic topic = topicRepo.findByUrl(topicUrl);
