@@ -101,8 +101,14 @@ public class TelegramBot extends TelegramLongPollingBot implements BotService {
 			if (update.getMessage().hasText()) {
 				String mtxt = message.getText().trim();
 				String muser = message.getFrom().getUserName();
-				if (mtxt.endsWith("@SenomasBot")) mtxt = mtxt.substring(0, mtxt.length()-11).trim();
-				log.info("MESSAGE RECEIVE text: [" + mtxt + "] from ["+muser+"] ["+message.getChat().isGroupChat()+"]");
+				if (message.getChat().isGroupChat()) {
+					if (mtxt.endsWith("@SenomasBot")) {
+						mtxt = mtxt.substring(0, mtxt.length()-11).trim();
+					} else {
+						return;
+					}
+				}
+				log.info("MESSAGE RECEIVE text: [" + mtxt + "] from ["+muser+"]");
 				// cmds.put("subscribe",
 				// Pattern.compile("/subscribe\\s+([^\\s]+)\\s+([^\\s]+)\\s*"));
 				// cmds.put("unsub",
